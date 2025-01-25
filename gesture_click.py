@@ -7,6 +7,7 @@ from mediapipe.framework.formats import landmark_pb2
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+import mouse
 
 MODEL_PATH = "face_landmarker.task"
 
@@ -18,10 +19,10 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 def draw_landmarks_on_image(rgb_image, detection_result):
 
 # Debug: Print the number of faces detected
-  if detection_result.face_landmarks:
-    print(f"Number of faces detected: {len(detection_result.face_landmarks)}")
-  else:
-    print("No faces detected.")
+  # if detection_result.face_landmarks:
+  #   print(f"Number of faces detected: {len(detection_result.face_landmarks)}")
+  # else:
+  #   print("No faces detected.")
 
   face_landmarks_list = detection_result.face_landmarks
   annotated_image = np.copy(rgb_image)
@@ -60,6 +61,7 @@ def draw_landmarks_on_image(rgb_image, detection_result):
 
   return annotated_image
 
+
 def plot_face_blendshapes_bar_graph(face_blendshapes):
   # Extract the face blendshapes category names and scores.
   face_blendshapes_names = [face_blendshapes_category.category_name for face_blendshapes_category in face_blendshapes]
@@ -89,14 +91,119 @@ options = vision.FaceLandmarkerOptions(base_options=base_options,
                                        num_faces=1)
 detector = vision.FaceLandmarker.create_from_options(options)
 
+
+# get face landmarks
+def get_landmark_coordinates(detection_result):
+  if not detection_result:
+    return []
+  face_landmarks_list = detection_result.face_landmarks
+  all_face_landmarks = []
+
+  for face_landmarks in face_landmarks_list:
+    landmarks = [[landmark.x, landmark.y, landmark.z] for landmark in face_landmarks]
+    all_face_landmarks.append(landmarks)
+
+  return all_face_landmarks
+
 # STEP 3: Load the input image.
-image = mp.Image.create_from_file("image.jpeg")
+cap = cv2.VideoCapture(0)
 
-# STEP 4: Detect face landmarks from the input image.
-detection_result = detector.detect(image)
+if not cap.isOpened():
+  print("Error: could not open webcam")
+  exit()
 
-# STEP 5: Process the detection result. In this case, visualize it.
-annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_result)
 while True:
-    cv2.imshow("hi", cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR))
-    
+  ret, frame = cap.read()
+  if not ret:
+    print("Error: failed to capture frame")
+    break
+
+  # convert to RGB
+  rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+  # convert to mediapipe's image format
+  mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+
+
+
+
+
+  # STEP 4: Detect face landmarks from the input image.
+  detection_result = detector.detect(mp_image)
+
+  # STEP 5: Process the detection result. In this case, visualize it.
+  annotated_frame = draw_landmarks_on_image(rgb_frame, detection_result)
+
+  # Convert the annotated frame back to BGR for OpenCV
+  bgr_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_RGB2BGR)
+
+ # Display the frame
+  cv2.imshow("Live Face Landmarks", bgr_frame)
+
+  # Exit the loop if 'q' is pressed
+  if cv2.waitKey(1) & 0xFF == ord('q'):
+      break
+
+  coords = get_landmark_coordinates(detection_result)
+
+  #print(len(coords))
+  
+  # if len(coords) > 0:
+  #   print(coords[0][15][1], coords[0][19][1])
+
+  if len(coords) > 0:
+    upper_lip = coords[0][16][1]
+    lower_lip = coords[0][0][1]
+    diff = upper_lip - lower_lip
+    #print(diff)
+    if diff >= 0.1:
+
+      #print("open")
+      mouse.press(button="left")
+      
+    else:
+      #print("closed")
+      mouse.release(button="left")
+
+
+    forehead = coords[0][10][1]
+    #print(forehead)
+    chin = coords[0][152][1]
+    diff = forehead - chin 
+    if diff <= 0.32:
+      mouse.press(button="right")
+    else:
+      mouse.release(button="right")
+
+    left_cheek = coords[0][123][2]
+    if left_cheek < 0:
+      mouse.wheel(1)
+    else:
+      mouse.wheel(0)
+    # print(left_cheek)
+
+    right_cheek = coords[0][352][2]
+    if right_cheek < 0:
+      mouse.wheel(-1)
+    else:
+      mouse.wheel(0)
+
+    nose = coords[0][4][1]
+    diff = nose - upper_lip
+    # print(diff)
+
+    top_right_eyelid = coords[0][386][1]
+    bottom_right_eyelid = coords[0][374][1]
+
+    # diff = top_right_eyelid - bottom_right_eyelid
+    # #print (diff)
+
+    # if diff <= 0.135:
+    #   mouse.press(button="right")
+    # else:
+    #   mouse.release(button="right")
+
+
+
+cap.release()
+cv2.destroyAllWindows()
