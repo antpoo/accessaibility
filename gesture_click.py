@@ -94,7 +94,6 @@ options = vision.FaceLandmarkerOptions(base_options=base_options,
                                        num_faces=1)
 detector = vision.FaceLandmarker.create_from_options(options)
 
-
 # get face landmarks
 def get_landmark_coordinates(detection_result):
   if not detection_result:
@@ -108,29 +107,13 @@ def get_landmark_coordinates(detection_result):
 
   return all_face_landmarks
 
-# STEP 3: Load the input image.
-cap = cv2.VideoCapture(0)
-
-if not cap.isOpened():
-  print("Error: could not open webcam")
-  exit()
-
-while True:
-  
-  ret, frame = cap.read()
-  if not ret:
-    print("Error: failed to capture frame")
-    break
-
+def mouse_clicks(image: np.ndarray): 
+  global left_pressed, right_pressed
   # convert to RGB
-  rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+  rgb_frame = image
 
   # convert to mediapipe's image format
   mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
-
-
-
-
 
   # STEP 4: Detect face landmarks from the input image.
   detection_result = detector.detect(mp_image)
@@ -143,10 +126,6 @@ while True:
 
  # Display the frame
   cv2.imshow("Live Face Landmarks", bgr_frame)
-
-  # Exit the loop if 'q' is pressed
-  if cv2.waitKey(1) & 0xFF == ord('q'):
-      break
 
   coords = get_landmark_coordinates(detection_result)
 
@@ -183,7 +162,6 @@ while True:
       mouse.release(button="right")
       right_pressed = False
 
-
     left_cheek = coords[0][123][2]
     if left_cheek < 0:
       mouse.wheel(1)
@@ -201,9 +179,6 @@ while True:
     diff = nose - upper_lip
     # print(diff)
 
-    top_right_eyelid = coords[0][386][1]
-    bottom_right_eyelid = coords[0][374][1]
-
     # diff = top_right_eyelid - bottom_right_eyelid
     # #print (diff)
 
@@ -211,8 +186,3 @@ while True:
     #   mouse.press(button="right")
     # else:
     #   mouse.release(button="right")
-
-
-
-cap.release()
-cv2.destroyAllWindows()

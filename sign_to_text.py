@@ -72,13 +72,10 @@ base_options = python.BaseOptions(model_asset_path='gesture_recognizer.task')
 options = vision.GestureRecognizerOptions(base_options=base_options)
 recognizer = vision.GestureRecognizer.create_from_options(options)
 
-cap_device = 0
-
 use_static_image_mode = True
 min_detection_confidence = 0.7
 min_tracking_confidence = 0.5
 
-cap = cv.VideoCapture(cap_device)
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(
     static_image_mode=use_static_image_mode,
@@ -99,17 +96,9 @@ special_gestures = {"Open_Palm": "capslock", "ILoveYou": "enter", "Thumb_Up": "s
 hold = False
 pressed = False
 
-while True:
-    # Camera capture #####################################################
-    cv.waitKey(200)
-    ret, image = cap.read()
-    if not ret:
-        break
-    image = cv.flip(image, 1)  # Mirror display
+def sign_to_keyboard(image: np.ndarray):
+    global cur_char, hold, pressed, special_gestures
     debug_image = copy.deepcopy(image)
-
-    # Detection implementation #############################################################
-    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
 
     image.flags.writeable = False
     results = hands.process(image)
@@ -122,6 +111,8 @@ while True:
             if isinstance(image, np.ndarray):
                 image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
             recognition_result = recognizer.recognize(image)
+            if len(recognition_result.gestures) == 0:
+                continue
             new_char = recognition_result.gestures[0][0].category_name
 
             if not(new_char in special_gestures):
@@ -163,3 +154,4 @@ while True:
             pydirectinput.keyUp(cur_char)
             pressed = False
         cur_char = ''
+    
