@@ -1,4 +1,7 @@
 /venv
+/jerrywang
+/.venv
+
 **/__pycache__/
 jerrywang
 face_landmarker.task
