@@ -96,6 +96,10 @@ special_gestures = {"Open_Palm": "capslock", "ILoveYou": "enter", "Thumb_Up": "s
 hold = False
 pressed = False
 
+def set_hold(new_hold: bool):
+    global hold
+    hold = new_hold
+
 def sign_to_keyboard(image: np.ndarray):
     global cur_char, hold, pressed, special_gestures
     debug_image = copy.deepcopy(image)
