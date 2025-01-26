@@ -11,6 +11,9 @@ import mouse
 
 MODEL_PATH = "face_landmarker.task"
 
+left_pressed = False
+right_pressed = False
+
 BaseOptions = mp.tasks.BaseOptions
 FaceLandmarker = mp.tasks.vision.FaceLandmarker
 FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
@@ -113,6 +116,7 @@ if not cap.isOpened():
   exit()
 
 while True:
+  
   ret, frame = cap.read()
   if not ret:
     print("Error: failed to capture frame")
@@ -155,25 +159,30 @@ while True:
     upper_lip = coords[0][16][1]
     lower_lip = coords[0][0][1]
     diff = upper_lip - lower_lip
-    #print(diff)
-    if diff >= 0.1:
+
+    print(left_pressed)
+    if diff >= 0.1 and (not left_pressed):
 
       #print("open")
       mouse.press(button="left")
+      left_pressed = True
       
-    else:
+    elif diff < 0.1 and left_pressed:
       #print("closed")
       mouse.release(button="left")
-
+      left_pressed = False
 
     forehead = coords[0][10][1]
     #print(forehead)
     chin = coords[0][152][1]
-    diff = forehead - chin 
-    if diff <= 0.32:
+    diff = chin - forehead
+    if diff <= 0.28 and (not right_pressed):
       mouse.press(button="right")
-    else:
+      right_pressed = True
+    elif right_pressed and diff > 0.28:
       mouse.release(button="right")
+      right_pressed = False
+
 
     left_cheek = coords[0][123][2]
     if left_cheek < 0:
