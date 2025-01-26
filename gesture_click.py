@@ -14,6 +14,20 @@ MODEL_PATH = "face_landmarker.task"
 left_pressed = False
 right_pressed = False
 
+lclick_thresh = 0.1
+rclick_thresh = 0.28
+
+ldiff = 0
+rdiff = 0
+
+def set_lclick():
+  global lclick_thresh, ldiff
+  lclick_thresh = ldiff
+
+def set_rclick():
+  global rclick_thresh, rdiff
+  rclick_thresh = rdiff
+
 BaseOptions = mp.tasks.BaseOptions
 FaceLandmarker = mp.tasks.vision.FaceLandmarker
 FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
@@ -108,7 +122,7 @@ def get_landmark_coordinates(detection_result):
   return all_face_landmarks
 
 def mouse_clicks(image: np.ndarray): 
-  global left_pressed, right_pressed
+  global left_pressed, right_pressed, lclick_thresh, rclick_thresh, ldiff, rdiff
   # convert to RGB
   rgb_frame = image
 
@@ -137,15 +151,15 @@ def mouse_clicks(image: np.ndarray):
   if len(coords) > 0:
     upper_lip = coords[0][16][1]
     lower_lip = coords[0][0][1]
-    diff = upper_lip - lower_lip
+    ldiff = upper_lip - lower_lip
 
-    if diff >= 0.1 and (not left_pressed):
+    if ldiff >= lclick_thresh and (not left_pressed):
 
       #print("open")
       mouse.press(button="left")
       left_pressed = True
       
-    elif diff < 0.1 and left_pressed:
+    elif ldiff < lclick_thresh and left_pressed:
       #print("closed")
       mouse.release(button="left")
       left_pressed = False
@@ -153,11 +167,11 @@ def mouse_clicks(image: np.ndarray):
     forehead = coords[0][10][1]
     #print(forehead)
     chin = coords[0][152][1]
-    diff = chin - forehead
-    if diff <= 0.28 and (not right_pressed):
+    rdiff = chin - forehead
+    if rdiff <= rclick_thresh and (not right_pressed):
       mouse.press(button="right")
       right_pressed = True
-    elif right_pressed and diff > 0.28:
+    elif right_pressed and rdiff > rclick_thresh:
       mouse.release(button="right")
       right_pressed = False
 
