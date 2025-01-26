@@ -1,14 +1,9 @@
 import cv2
 import keyboard
-from screeninfo import get_monitors
-import mediapipe as mp
 import mouse
-#from pynput.mouse import Button, Controller
+from constants import *
+import mediapipe as mp
 
-# Get display resolution dynamically
-monitor = get_monitors()[0]  # Use the primary monitor
-DISPLAY_WIDTH = monitor.width
-DISPLAY_HEIGHT = monitor.height
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
@@ -27,11 +22,7 @@ if not cap.isOpened():
     print("Error: Could not access the webcam.")
     exit()
 
-# Set a keybind to close the program
-EXIT_KEY = 'esc'
 
-SMOOTHING_FACTOR = 0.5  # The closer to 1, the smoother the movement
-smoothed_x, smoothed_y = None, None
 
 
 while True:
@@ -72,34 +63,29 @@ while True:
                     else:
                         smoothed_x = SMOOTHING_FACTOR * smoothed_x + (1 - SMOOTHING_FACTOR) * x
                         smoothed_y = SMOOTHING_FACTOR * smoothed_y + (1 - SMOOTHING_FACTOR) * y
-                    #mousePos = Controller().position
-                    # Update mouse position
-                    #mouse.drag(mousePos[0], mousePos[1], smoothed_x, smoothed_y, absolute=True, duration=0.05)
+                    
                     mouse.move(smoothed_x, smoothed_y)
 
-                    # Use smoothed_x and smoothed_y for visualization (red dot and text box)
+                    # Optional: If camera feed should be displayed with landmarks and connections
                     cv2.circle(frame, (int(smoothed_x), int(smoothed_y)), 15, (0, 0, 255), -1)
-
-
-                    # Optional: Draw hand landmarks and connections
-                    #mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                    mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
         
-        result_face = face.process(rgb_frame)
-        if result_face.multi_face_landmarks:
-            for hand_landmarks in result_face.multi_face_landmarks:
-                # Index finger tip landmark (Landmark #8 in MediaPipe face)
-                top_lip = hand_landmarks.landmark[14]
-                bottom_lip = hand_landmarks.landmark[12]
-                tl_y = int(top_lip.y * DISPLAY_HEIGHT)
-                bl_y = int(bottom_lip.y * DISPLAY_HEIGHT)
-                diff = tl_y-bl_y
-                if diff>35:
-                    mouse.click(button='left')
-                # Optional: Draw hand landmarks and connections
-                #mp_drawing.draw_landmarks(frame, hand_landmarks)
+        #######################################################################################
+        # result_face = face.process(rgb_frame)
+        # if result_face.multi_face_landmarks:
+        #     for hand_landmarks in result_face.multi_face_landmarks:
+        #         # Index finger tip landmark (Landmark #8 in MediaPipe face)
+        #         top_lip = hand_landmarks.landmark[14]
+        #         bottom_lip = hand_landmarks.landmark[12]
+        #         tl_y = int(top_lip.y * DISPLAY_HEIGHT)
+        #         bl_y = int(bottom_lip.y * DISPLAY_HEIGHT)
+        #         diff = tl_y-bl_y
+        #         if diff>MOUTH_OPEN_THRESHOLD:
+        #             mouse.click(button='left')
+        ######################################################################################
 
-        # Display the frame
-        #cv2.imshow('AccessAIbility', frame)
+        # Optional: If camera feed should be displayed
+        cv2.imshow('AccessAIbility', frame)
 
         # Exit if 'q' is pressed in the OpenCV window
         if cv2.waitKey(1) & 0xFF == ord('q'):
