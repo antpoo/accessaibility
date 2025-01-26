@@ -3,6 +3,7 @@ import keyboard
 from screeninfo import get_monitors
 import mediapipe as mp
 import mouse
+#from pynput.mouse import Button, Controller
 
 # Get display resolution dynamically
 monitor = get_monitors()[0]  # Use the primary monitor
@@ -28,7 +29,6 @@ if not cap.isOpened():
 
 # Set a keybind to close the program
 EXIT_KEY = 'esc'
-TILDE_KEY = '`'
 
 SMOOTHING_FACTOR = 0.5  # The closer to 1, the smoother the movement
 smoothed_x, smoothed_y = None, None
@@ -40,11 +40,6 @@ while True:
         if keyboard.is_pressed(EXIT_KEY):
             print(f"'{EXIT_KEY}' pressed. Exiting...")
             break
-
-        # Check if the tilde key is pressed and perform a left mouse click
-        if keyboard.is_pressed(TILDE_KEY):
-            mouse.click(button='left')
-            print("~",end='')
 
         ret, frame = cap.read()
         if not ret:
@@ -59,7 +54,6 @@ while True:
 
         # Process the frame to detect landmarks
         result_hands = hands.process(rgb_frame)
-        result_face = face.process(rgb_frame)
 
         # Resize the frame to fit the display resolution exactly (stretch)
         frame = cv2.resize(frame, (DISPLAY_WIDTH, DISPLAY_HEIGHT), interpolation=cv2.INTER_LINEAR)
@@ -78,8 +72,9 @@ while True:
                     else:
                         smoothed_x = SMOOTHING_FACTOR * smoothed_x + (1 - SMOOTHING_FACTOR) * x
                         smoothed_y = SMOOTHING_FACTOR * smoothed_y + (1 - SMOOTHING_FACTOR) * y
-
+                    #mousePos = Controller().position
                     # Update mouse position
+                    #mouse.drag(mousePos[0], mousePos[1], smoothed_x, smoothed_y, absolute=True, duration=0.05)
                     mouse.move(smoothed_x, smoothed_y)
 
                     # Use smoothed_x and smoothed_y for visualization (red dot and text box)
@@ -88,6 +83,8 @@ while True:
 
                     # Optional: Draw hand landmarks and connections
                     #mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+        
+        result_face = face.process(rgb_frame)
         if result_face.multi_face_landmarks:
             for hand_landmarks in result_face.multi_face_landmarks:
                 # Index finger tip landmark (Landmark #8 in MediaPipe face)
@@ -99,10 +96,10 @@ while True:
                 if diff>35:
                     mouse.click(button='left')
                 # Optional: Draw hand landmarks and connections
-                mp_drawing.draw_landmarks(frame, hand_landmarks)
+                #mp_drawing.draw_landmarks(frame, hand_landmarks)
 
         # Display the frame
-        cv2.imshow('AccessAIbility', frame)
+        #cv2.imshow('AccessAIbility', frame)
 
         # Exit if 'q' is pressed in the OpenCV window
         if cv2.waitKey(1) & 0xFF == ord('q'):
