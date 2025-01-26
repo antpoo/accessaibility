@@ -108,7 +108,9 @@ def sign_to_keyboard(image: np.ndarray):
         for hand_landmarks, handedness in zip(
             results.multi_hand_landmarks, results.multi_handedness
         ):
-            if isinstance(image, np.ndarray):
+            if handedness.classification[0].label[0:] == "Right":
+                continue
+            if isinstance(image, np.ndarray):   
                 image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
             recognition_result = recognizer.recognize(image)
             if len(recognition_result.gestures) == 0:
@@ -153,5 +155,6 @@ def sign_to_keyboard(image: np.ndarray):
             print('release', cur_char)
             pydirectinput.keyUp(cur_char)
             pressed = False
+            cur_char = ''
         cur_char = ''
     

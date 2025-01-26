@@ -125,7 +125,7 @@ def mouse_clicks(image: np.ndarray):
   bgr_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_RGB2BGR)
 
  # Display the frame
-  cv2.imshow("Live Face Landmarks", bgr_frame)
+  # cv2.imshow("Live Face Landmarks", bgr_frame)
 
   coords = get_landmark_coordinates(detection_result)
 
@@ -139,7 +139,6 @@ def mouse_clicks(image: np.ndarray):
     lower_lip = coords[0][0][1]
     diff = upper_lip - lower_lip
 
-    print(left_pressed)
     if diff >= 0.1 and (not left_pressed):
 
       #print("open")
